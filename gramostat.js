@@ -3,27 +3,27 @@
 /// TODO Use "use strict", Object.freeze, lambdas, Pure functions, generators&iterators, modules
 ///
 /// Sample usage:
-var import_script = (function (oHead) {
-	function loadError(oError) {
-		throw new URIError("The script " + oError.target.src + " is not accessible.");
-	}
+// var import_script = (function (oHead) {
+// 	function loadError(oError) {
+// 		throw new URIError("The script " + oError.target.src + " is not accessible.");
+// 	}
 
-	function fOnload() { console.log('The script loaded.'); }
+// 	function fOnload() { console.log('The script loaded.'); }
 
-	return function (sSrc) {
-		console.log('Loading the script...');
+// 	return function (sSrc) {
+// 		console.log('Loading the script...');
 
-		var oScript = document.createElement("script");
-		oScript.type = "text\/javascript";
-		oScript.onerror = loadError;
-		oScript.onload = fOnload;
-		oHead.appendChild(oScript);
-		oScript.src = sSrc;
-	};
+// 		var oScript = document.createElement("script");
+// 		oScript.type = "text\/javascript";
+// 		oScript.onerror = loadError;
+// 		oScript.onload = fOnload;
+// 		oHead.appendChild(oScript);
+// 		oScript.src = sSrc;
+// 	};
 
-})(document.head || document.getElementsByTagName("head")[0]);
+// })(document.head || document.getElementsByTagName("head")[0]);
 
-import_script('https://dibikhin.github.io/gramostat/gramostat.js');
+// import_script('https://dibikhin.github.io/gramostat/gramostat.js');
 // var today_followers = Gramostat.export_followers(510162439);
 // Gramostat.stats(yesterday_followers, today_followers);
 
