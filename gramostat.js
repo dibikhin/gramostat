@@ -24,7 +24,7 @@
 
 // import_script('https://dibikhin.github.io/gramostat/gramostat.js');
 // var today_followers = Gramostat.export_followers(510162439);
-// Gramostat.stats(yesterday_followers, today_followers);
+// Gramostat.followers_stats(yesterday_followers, today_followers);
 
 (function () {
 	function test() {
@@ -52,7 +52,7 @@
 
 	})(document.head || document.getElementsByTagName("head")[0]);
 
-	function stats(yesterday_followers, today_followers) {
+	function followers_stats(yesterday_followers, today_followers) {
 		console.log('Computing stats...');
 
 		var today_followers_names = _followers_to_usernames(today_followers);
@@ -211,6 +211,27 @@
 		return _.groupBy(stats, user_stats => user_stats.activity);
 	}
 
+	 /**
+	 * ***NOT PURE***
+	 * 
+	 * Fetches users and computes grouped stats of humanity
+	 * 
+	 * humanity_stats(dri_fols_stats_201017.subscribed);
+	 * 
+	 * @param {string[]} usernames Usernames
+	 * @returns {object[]} Grouped by category users' stats
+	 */
+	function humanity_stats(usernames) {
+		var stats = _.map(usernames, function (username) {
+			return {
+				username: username,
+				humanity: _humanity(get_user_by_username(username))
+			};
+		});
+
+		return _.groupBy(stats, user_stats => user_stats.humanity);
+	}
+
 	/**
 	 * Compute user's influence by followers to following ratio.
 	 * Absolute followers' qty ignored.
@@ -222,12 +243,12 @@
 	 */
 	function _influence(user_info) {
 		if (!user_info || !user_info.user
+			|| !user_info.user.followed_by || !user_info.user.follows
 			|| user_info.user.followed_by.count < 1 || user_info.user.follows.count < 1) {
 			return 'N/A';
 		}
 
 		var user = user_info.user;
-
 		var followers_ratio = user.followed_by.count / user.follows.count;
 
 		if (followers_ratio <= 0.5) {
@@ -276,6 +297,43 @@
 		}
 	}
 
+    /**
+	* Compute user's humanity by absolute media, followers, followings qtys
+	* 
+	* Category range: from Exactly bot (Zeros) to Maybe human (all are Non-zero).
+	* 
+	* @param {object} user User
+	* @returns {string} Category
+	*/
+	function _humanity(user_info) {
+		if (!user_info || !user_info.user || !user_info.user.media || user_info.user.media.count < 0
+			|| !user_info.user.followed_by || !user_info.user.follows
+			|| user_info.user.followed_by.count < 0 || user_info.user.follows.count < 0) {
+			return 'N/A';
+		}
+
+		var user = user_info.user;
+		var qtys = [user.media.count, user.followed_by.count, user.follows.count];
+
+		var threshold = x => x < 5;
+
+		// TODO add mass following filter and magnitude detector (some posts, thousands fols)
+
+		if (_.all(qtys, threshold)) {
+			return 'Exactly bot';
+		} else if (_.all([user.followed_by.count, user.follows.count], threshold)) {
+			return 'Almost bot';
+		} else if (_.all([user.media.count, user.followed_by.count], threshold)) {
+			return 'Almost bot';
+		} else if (_.all([user.media.count, user.follows.count], threshold)) {
+			return 'Almost bot';
+		} else if (_.any(qtys, threshold)) {
+			return 'Maybe bot';
+		} else {
+			return 'Maybe human';
+		}
+	}
+
 	// https://www.instagram.com/knl_100/?__a=1 -> 404
 	function _getSync(url) {
 		var result = null;
@@ -301,21 +359,34 @@
 		fetch_common_followers: fetch_common_followers,
 		find_common_followers: find_common_followers,
 		export_followers: export_followers,
-		stats: stats,
+		followers_stats: followers_stats,
 		get_user_by_username: get_user_by_username,
 		influence_stats: influence_stats,
 		activity_stats: activity_stats,
+		humanity_stats: humanity_stats,
 		test: test
 	};
 	console.log('Loaded!');
 })();
 
+// var dri_fols_241017 = Gramostat.export_followers(510162439);
+// var dri_fols_stats_241017 = Gramostat.followers_stats(dri_fols_221017, dri_fols_241017);
+// var dri_fols_qual_24 = Gramostat.influence_stats(dri_fols_stats_241017.subscribed);
+// var dri_fols_hum_24 = Gramostat.humanity_stats(dri_fols_stats_241017.subscribed);
+
+// TODO everyday run: export, stats
 // TODO combined activity and influence stats
-// TODO assign Gramostat in place
-// TODO Use "use strict", Object.freeze, lambdas, Pure functions, generators&iterators, modules
 // TODO stats(): compare objects w/ mixin Underscore's createIndexFinder with _.isEqual
 // TODO extract_migrated_followers()
-// TODO add _.throttle by hours for care with Instagram limits
-// TODO everyday run: export, stats
+// TODO reachability_stats()
+
 // TODO add _.memoize and cache reloading
+// TODO add _.throttle by hours for care with Instagram limits
+
 // TODO store history to Firebase
+
+// TODO assign Gramostat in place
+// TODO group functions in submodules Gramostat.Util, Gramostat.Data, Gramostat.Stats
+// TODO inject deps: underscore, jQuery
+
+// TODO Use "use strict", Object.freeze, lambdas, Pure functions, generators&iterators, modules
