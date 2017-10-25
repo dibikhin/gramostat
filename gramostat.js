@@ -180,12 +180,16 @@
 	 * @returns {object[]} Grouped by category users' stats
 	 */
 	function influence_stats(usernames) {
+		console.log('Influence stats loading...');
+
 		var stats = _.map(usernames, function (username) {
 			return {
 				username: username,
 				influence: _influence(get_user_by_username(username))
 			};
 		});
+
+		console.log('Influence stats loaded.');
 
 		return _.groupBy(stats, user_stats => user_stats.influence);
 	}
@@ -201,6 +205,8 @@
 	 * @returns {object[]} Grouped by category users' stats
 	 */
 	function activity_stats(usernames) {
+		console.log('Activity stats loading...');
+
 		var stats = _.map(usernames, function (username) {
 			return {
 				username: username,
@@ -208,28 +214,39 @@
 			};
 		});
 
+		console.log('Activity stats loaded.');
+
 		return _.groupBy(stats, user_stats => user_stats.activity);
 	}
 
-	 /**
-	 * ***NOT PURE***
-	 * 
-	 * Fetches users and computes grouped stats of humanity
-	 * 
-	 * humanity_stats(dri_fols_stats_201017.subscribed);
-	 * 
-	 * @param {string[]} usernames Usernames
-	 * @returns {object[]} Grouped by category users' stats
-	 */
-	function humanity_stats(usernames) {
-		var stats = _.map(usernames, function (username) {
+	/**
+	* ***NOT PURE***
+	* 
+	* Fetches users and computes grouped stats of quality
+	* 
+	* quality_stats(dri_fols_stats_201017.subscribed);
+	* 
+	* @param {string[]} usernames Usernames
+	* @returns {object[]} Grouped by category users' stats
+	*/
+	function quality_stats(usernames) {
+		console.log('Quality stats loading...');
+		var users = _.map(usernames, get_user_by_username);
+		console.log('Quality stats loaded.');
+
+		return _quality_stats(users);
+	}
+
+	function _quality_stats(users) {
+		var stats = _.map(users, function (user) {
 			return {
-				username: username,
-				humanity: _humanity(get_user_by_username(username))
+				username: user.user.username,
+				quality: _quality(user),
+				influence: _influence(user),
+				activity: _activity(user)
 			};
 		});
-
-		return _.groupBy(stats, user_stats => user_stats.humanity);
+		return _.groupBy(stats, user_stats => user_stats.quality);
 	}
 
 	/**
@@ -251,7 +268,9 @@
 		var user = user_info.user;
 		var followers_ratio = user.followed_by.count / user.follows.count;
 
-		if (followers_ratio <= 0.5) {
+		if (followers_ratio <= 0.25) {
+			return 'Spammer';			
+		} else if (followers_ratio <= 0.5) {
 			return 'Mass follower';
 		} else if (followers_ratio <= 1) {
 			return 'Low popularity';
@@ -298,14 +317,22 @@
 	}
 
     /**
-	* Compute user's humanity by absolute media, followers, followings qtys
+	* Compute user's quality by absolute media, followers, followings qtys
 	* 
-	* Category range: from Exactly bot (Zeros) to Maybe human (all are Non-zero).
+	* Category range: from Poor (Zeros) to Excellent (All high).
 	* 
 	* @param {object} user User
 	* @returns {string} Category
 	*/
-	function _humanity(user_info) {
+	function _quality(user_info) {
+		function _proportions(user) {
+			// posts a little by follows or followed by many
+			if(user.media.count < 60 && (user.followed_by.count > 200 || user.follows.count > 200)) {
+				return 'Suspicious';
+			}
+			return 'Other';
+		}
+
 		if (!user_info || !user_info.user || !user_info.user.media || user_info.user.media.count < 0
 			|| !user_info.user.followed_by || !user_info.user.follows
 			|| user_info.user.followed_by.count < 0 || user_info.user.follows.count < 0) {
@@ -317,9 +344,7 @@
 
 		var threshold = x => x < 5;
 
-		// TODO add mass following filter and magnitude detector (some posts, thousands fols)
-
-		if (_.all(qtys, threshold)) {
+		if (_.all(qtys, threshold) || _proportions(user) === 'Suspicious') {
 			return 'Exactly bot';
 		} else if (_.all([user.followed_by.count, user.follows.count], threshold)) {
 			return 'Almost bot';
@@ -363,16 +388,20 @@
 		get_user_by_username: get_user_by_username,
 		influence_stats: influence_stats,
 		activity_stats: activity_stats,
-		humanity_stats: humanity_stats,
+		quality_stats: quality_stats,
 		test: test
 	};
 	console.log('Loaded!');
 })();
 
-// var dri_fols_241017 = Gramostat.export_followers(510162439);
-// var dri_fols_stats_241017 = Gramostat.followers_stats(dri_fols_221017, dri_fols_241017);
-// var dri_fols_qual_24 = Gramostat.influence_stats(dri_fols_stats_241017.subscribed);
-// var dri_fols_hum_24 = Gramostat.humanity_stats(dri_fols_stats_241017.subscribed);
+// var dri_fols_251017 = Gramostat.export_followers(510162439);
+// var dri_fols_stats_251017 = Gramostat.followers_stats(dri_fols_241017, dri_fols_251017);
+// var dri_fols_infl_25 = Gramostat.influence_stats(dri_fols_stats_251017.subscribed);
+// var dri_fols_qual_25 = Gramostat.quality_stats(dri_fols_stats_251017.subscribed);
+
+// var epi_fols_241017 = Gramostat.export_followers(6196065610);
+// var epi_fols_241017_names = _.map(epi_fols_241017, item => item.node.username);
+// var epi_fols_hum_24 = Gramostat.humanity_stats(epi_fols_241017_names);
 
 // TODO everyday run: export, stats
 // TODO combined activity and influence stats
@@ -388,5 +417,6 @@
 // TODO assign Gramostat in place
 // TODO group functions in submodules Gramostat.Util, Gramostat.Data, Gramostat.Stats
 // TODO inject deps: underscore, jQuery
+// TODO mark private/public members
 
 // TODO Use "use strict", Object.freeze, lambdas, Pure functions, generators&iterators, modules
