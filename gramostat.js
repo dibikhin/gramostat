@@ -238,8 +238,8 @@
 	}
 
 	function _quality_stats(users) {
-		var stats = _.map(users, function (user) {
-			if (!user || !user.user) return;
+		var _users = _.filter(users, function (user) { return !!user && !!user.user });
+		var stats = _.map(_users, function (user) {
 			return {
 				username: user.user.username,
 				quality: _quality(user),
