@@ -239,8 +239,9 @@
 
 	function _quality_stats(users) {
 		var stats = _.map(users, function (user) {
+			if (!user || !user.user) return;
 			return {
-				username: !!user ? user.user.username : null,
+				username: user.user.username,
 				quality: _quality(user),
 				influence: _influence(user),
 				activity: _activity(user)
