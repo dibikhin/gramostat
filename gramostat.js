@@ -240,7 +240,7 @@
 	function _quality_stats(users) {
 		var stats = _.map(users, function (user) {
 			return {
-				username: user.user.username,
+				username: !!user ? user.user.username : null,
 				quality: _quality(user),
 				influence: _influence(user),
 				activity: _activity(user)
