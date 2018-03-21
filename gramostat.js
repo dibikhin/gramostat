@@ -242,6 +242,8 @@
 		var stats = _.map(_users, function (user) {
 			return {
 				username: user.graphql.user.username,
+				biography: user.graphql.user.biography,
+				full_name: user.graphql.user.full_name,
 				quality: _quality(user),
 				influence: _influence(user),
 				activity: _activity(user)
@@ -261,13 +263,13 @@
 	 */
 	function _influence(user_info) {
 		if (!user_info || !user_info.graphql || !user_info.graphql.user
-			|| !user_info.graphql.user.followed_by || !user_info.graphql.user.follows
-			|| user_info.graphql.user.followed_by.count < 1 || user_info.graphql.user.follows.count < 1) {
+			|| !user_info.graphql.user.edge_followed_by || !user_info.graphql.user.edge_follow
+			|| user_info.graphql.user.edge_followed_by.count < 1 || user_info.graphql.user.edge_follow.count < 1) {
 			return 'N/A';
 		}
 
 		var user = user_info.graphql.user;
-		var followers_ratio = user.followed_by.count / user.follows.count;
+		var followers_ratio = user.edge_followed_by.count / user.edge_follow.count;
 
 		if (followers_ratio <= 0.25) {
 			return 'Spammer';			
@@ -297,11 +299,11 @@
 	*/
 	function _activity(user_info) {
 		if (!user_info || !user_info.graphql || !user_info.graphql.user
-            || !user_info.graphql.user.media || user_info.graphql.user.media.count < 0) {
+            || !user_info.graphql.user.edge_owner_to_timeline_media || user_info.graphql.user.edge_owner_to_timeline_media.count < 0) {
 			return 'N/A';
 		}
 
-		var media_count = user_info.graphql.user.media.count;
+		var media_count = user_info.graphql.user.edge_owner_to_timeline_media.count;
 
 		if (media_count === 0) {
 			return 'Inactive';
@@ -329,21 +331,21 @@
 	function _quality(user_info) {
 		function _proportions(user) {
 			// posts a little by follows or followed by many
-			if(user.media.count < 60 && (user.followed_by.count > 200 || user.follows.count > 200)) {
+			if(user.edge_owner_to_timeline_media.count < 60 && (user.followed_by.count > 200 || user.follows.count > 200)) {
 				return 'Suspicious';
 			}
 			return 'Other';
 		}
 
-		if (!user_info || !user_info.graphql || !user_info.graphql.user || !user_info.graphql.user.media
-            || user_info.graphql.user.media.count < 0
+		if (!user_info || !user_info.graphql || !user_info.graphql.user || !user_info.graphql.user.edge_owner_to_timeline_media
+            || user_info.graphql.user.edge_owner_to_timeline_media.count < 0
 			|| !user_info.graphql.user.followed_by || !user_info.graphql.user.follows
 			|| user_info.graphql.user.followed_by.count < 0 || user_info.graphql.user.follows.count < 0) {
 			return 'N/A';
 		}
 
 		var user = user_info.graphql.user;
-		var qtys = [user.media.count, user.followed_by.count, user.follows.count];
+		var qtys = [user.edge_owner_to_timeline_media.count, user.followed_by.count, user.follows.count];
 
 		var threshold = x => x < 5;
 
@@ -351,9 +353,9 @@
 			return 'Exactly bot';
 		} else if (_.all([user.followed_by.count, user.follows.count], threshold)) {
 			return 'Almost bot';
-		} else if (_.all([user.media.count, user.followed_by.count], threshold)) {
+		} else if (_.all([user.edge_owner_to_timeline_media.count, user.followed_by.count], threshold)) {
 			return 'Almost bot';
-		} else if (_.all([user.media.count, user.follows.count], threshold)) {
+		} else if (_.all([user.edge_owner_to_timeline_media.count, user.follows.count], threshold)) {
 			return 'Almost bot';
 		} else if (_.any(qtys, threshold)) {
 			return 'Maybe bot';
