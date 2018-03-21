@@ -331,7 +331,7 @@
 	function _quality(user_info) {
 		function _proportions(user) {
 			// posts a little by follows or followed by many
-			if(user.edge_owner_to_timeline_media.count < 60 && (user.followed_by.count > 200 || user.follows.count > 200)) {
+			if(user.edge_owner_to_timeline_media.count < 60 && (user.edge_followed_by.count > 200 || user.edge_follow.count > 200)) {
 				return 'Suspicious';
 			}
 			return 'Other';
@@ -339,23 +339,23 @@
 
 		if (!user_info || !user_info.graphql || !user_info.graphql.user || !user_info.graphql.user.edge_owner_to_timeline_media
             || user_info.graphql.user.edge_owner_to_timeline_media.count < 0
-			|| !user_info.graphql.user.followed_by || !user_info.graphql.user.follows
-			|| user_info.graphql.user.followed_by.count < 0 || user_info.graphql.user.follows.count < 0) {
+			|| !user_info.graphql.user.edge_followed_by || !user_info.graphql.user.edge_follow
+			|| user_info.graphql.user.edge_followed_by.count < 0 || user_info.graphql.user.edge_follow.count < 0) {
 			return 'N/A';
 		}
 
 		var user = user_info.graphql.user;
-		var qtys = [user.edge_owner_to_timeline_media.count, user.followed_by.count, user.follows.count];
+		var qtys = [user.edge_owner_to_timeline_media.count, user.edge_followed_by.count, user.edge_follow.count];
 
 		var threshold = x => x < 5;
 
 		if (_.all(qtys, threshold) || _proportions(user) === 'Suspicious') {
 			return 'Exactly bot';
-		} else if (_.all([user.followed_by.count, user.follows.count], threshold)) {
+		} else if (_.all([user.edge_followed_by.count, user.edge_follow.count], threshold)) {
 			return 'Almost bot';
-		} else if (_.all([user.edge_owner_to_timeline_media.count, user.followed_by.count], threshold)) {
+		} else if (_.all([user.edge_owner_to_timeline_media.count, user.edge_followed_by.count], threshold)) {
 			return 'Almost bot';
-		} else if (_.all([user.edge_owner_to_timeline_media.count, user.follows.count], threshold)) {
+		} else if (_.all([user.edge_owner_to_timeline_media.count, user.edge_follow.count], threshold)) {
 			return 'Almost bot';
 		} else if (_.any(qtys, threshold)) {
 			return 'Maybe bot';
