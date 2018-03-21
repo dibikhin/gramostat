@@ -22,7 +22,7 @@
 
 // })(document.head || document.getElementsByTagName("head")[0]);
 
-// import_script('https://dibikhin.github.io/gramostat/gramostat.js');
+// import_script('https://dibikhin.github.io/gramostat/gramostat.js?v=' + Date.now());
 // var today_followers = Gramostat.export_followers(510162439);
 // Gramostat.followers_stats(yesterday_followers, today_followers);
 
@@ -238,10 +238,10 @@
 	}
 
 	function _quality_stats(users) {
-		var _users = _.filter(users, function (user) { return !!user && !!user.graph_ql && !!user.graph_ql.user });
+		var _users = _.filter(users, function (user) { return !!user && !!user.graphql && !!user.graphql.user });
 		var stats = _.map(_users, function (user) {
 			return {
-				username: user.graph_ql.user.username,
+				username: user.graphql.user.username,
 				quality: _quality(user),
 				influence: _influence(user),
 				activity: _activity(user)
@@ -260,13 +260,13 @@
 	 * @returns {string} Category
 	 */
 	function _influence(user_info) {
-		if (!user_info || !user_info.graph_ql || !user_info.graph_ql.user
-			|| !user_info.graph_ql.user.followed_by || !user_info.graph_ql.user.follows
-			|| user_info.graph_ql.user.followed_by.count < 1 || user_info.graph_ql.user.follows.count < 1) {
+		if (!user_info || !user_info.graphql || !user_info.graphql.user
+			|| !user_info.graphql.user.followed_by || !user_info.graphql.user.follows
+			|| user_info.graphql.user.followed_by.count < 1 || user_info.graphql.user.follows.count < 1) {
 			return 'N/A';
 		}
 
-		var user = user_info.graph_ql.user;
+		var user = user_info.graphql.user;
 		var followers_ratio = user.followed_by.count / user.follows.count;
 
 		if (followers_ratio <= 0.25) {
@@ -296,12 +296,12 @@
 	* @returns {string} Category
 	*/
 	function _activity(user_info) {
-		if (!user_info || !user_info.graph_ql || !user_info.graph_ql.user
-            || !user_info.graph_ql.user.media || user_info.graph_ql.user.media.count < 0) {
+		if (!user_info || !user_info.graphql || !user_info.graphql.user
+            || !user_info.graphql.user.media || user_info.graphql.user.media.count < 0) {
 			return 'N/A';
 		}
 
-		var media_count = user_info.graph_ql.user.media.count;
+		var media_count = user_info.graphql.user.media.count;
 
 		if (media_count === 0) {
 			return 'Inactive';
@@ -335,14 +335,14 @@
 			return 'Other';
 		}
 
-		if (!user_info || !user_info.graph_ql || !user_info.graph_ql.user || !user_info.graph_ql.user.media
-            || user_info.graph_ql.user.media.count < 0
-			|| !user_info.graph_ql.user.followed_by || !user_info.graph_ql.user.follows
-			|| user_info.graph_ql.user.followed_by.count < 0 || user_info.graph_ql.user.follows.count < 0) {
+		if (!user_info || !user_info.graphql || !user_info.graphql.user || !user_info.graphql.user.media
+            || user_info.graphql.user.media.count < 0
+			|| !user_info.graphql.user.followed_by || !user_info.graphql.user.follows
+			|| user_info.graphql.user.followed_by.count < 0 || user_info.graphql.user.follows.count < 0) {
 			return 'N/A';
 		}
 
-		var user = user_info.graph_ql.user;
+		var user = user_info.graphql.user;
 		var qtys = [user.media.count, user.followed_by.count, user.follows.count];
 
 		var threshold = x => x < 5;
