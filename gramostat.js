@@ -331,16 +331,24 @@
 	function _quality(user_info) {
 		function _proportions(user) {
 			// posts a little by follows or followed by many
-			if(user.edge_owner_to_timeline_media.count < 60 && (user.edge_followed_by.count > 200 || user.edge_follow.count > 200)) {
+			//if(user.edge_owner_to_timeline_media.count < 60 && (user.edge_followed_by.count > 200 || user.edge_follow.count > 200)) {
+			//	return 'Suspicious';
+			//}
+			const followers_rate = user.edge_follow.count / user.edge_followed_by.count
+			if (followers_rate >= 2 && followers_rate < 4) {
 				return 'Suspicious';
+			}
+			if (followers_rate >= 4) {
+				return 'Dirty';
 			}
 			return 'Other';
 		}
 
-		if (!user_info || !user_info.graphql || !user_info.graphql.user || !user_info.graphql.user.edge_owner_to_timeline_media
-            || user_info.graphql.user.edge_owner_to_timeline_media.count < 0
-			|| !user_info.graphql.user.edge_followed_by || !user_info.graphql.user.edge_follow
-			|| user_info.graphql.user.edge_followed_by.count < 0 || user_info.graphql.user.edge_follow.count < 0) {
+		if (!user_info || !user_info.graphql || !user_info.graphql.user 
+		    || !user_info.graphql.user.edge_owner_to_timeline_media
+		    || user_info.graphql.user.edge_owner_to_timeline_media.count < 0
+		    || !user_info.graphql.user.edge_followed_by || !user_info.graphql.user.edge_follow
+		    || user_info.graphql.user.edge_followed_by.count < 0 || user_info.graphql.user.edge_follow.count < 0) {
 			return 'N/A';
 		}
 
@@ -349,7 +357,7 @@
 
 		var threshold = x => x < 5;
 
-		if (_.all(qtys, threshold) || _proportions(user) === 'Suspicious') {
+		if (_.all(qtys, threshold)) {
 			return 'Exactly bot';
 		} else if (_.all([user.edge_followed_by.count, user.edge_follow.count], threshold)) {
 			return 'Almost bot';
@@ -357,10 +365,14 @@
 			return 'Almost bot';
 		} else if (_.all([user.edge_owner_to_timeline_media.count, user.edge_follow.count], threshold)) {
 			return 'Almost bot';
+		} else if (_proportions(user) === 'Dirty') {
+			return 'Almost bot'
+		} else if (_proportions(user) === 'Suspicious') {
+			return 'Maybe bot'
 		} else if (_.any(qtys, threshold)) {
 			return 'Maybe bot';
 		} else {
-			return 'Maybe human';
+			return 'Almost human';
 		}
 	}
 
