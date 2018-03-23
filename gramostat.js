@@ -356,8 +356,11 @@
 		var qtys = [user.edge_owner_to_timeline_media.count, user.edge_followed_by.count, user.edge_follow.count];
 
 		var threshold = x => x < 5;
+		const bad_proportions = { 'Dirty': true, 'Suspicious': true };
 
 		if (_.all(qtys, threshold)) {
+			return 'Exactly bot';
+		} else if (_.any([user.edge_owner_to_timeline_media.count], threshold) && _proportions(user) in bad_proportions) {
 			return 'Exactly bot';
 		} else if (_.all([user.edge_followed_by.count, user.edge_follow.count], threshold)) {
 			return 'Almost bot';
